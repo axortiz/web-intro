@@ -340,14 +340,13 @@
       if (sequencePlayer) {
         sequencePlayer.dispose();
       }
-      
       if (noteSequence.length > 0) {
         // Calculate duration based on number of notes, minimum of one bar
         const barDuration = Math.max(1, Math.ceil(noteSequence.length / 4));
-        
+        console.log("Creating sequence with notes:", noteSequence, "barDuration:", barDuration);
         sequencePlayer = new Tone.Sequence((time, note) => {
+          console.log("Playing note:", note, "at time:", time);
           synth.triggerAttackRelease(note, "8n", time);
-          
           // Highlight the key that's playing
           const key = document.querySelector(`[data-note="${note}"]`);
           if (key) {
@@ -355,16 +354,17 @@
             setTimeout(() => key.classList.remove('active'), 150);
           }
         }, noteSequence, "4n");
-        
         // Set loop duration in bars
         Tone.Transport.timeSignature = 4;
         sequencePlayer.loop = true;
         sequencePlayer.loopEnd = barDuration + "m";
         sequencePlayer.start(0);
+        console.log("Sequence started, loopEnd:", sequencePlayer.loopEnd);
       }
     }
     
     function startSequence() {
+      console.log("startSequence called");
       if (noteSequence.length === 0) {
         alert("Add some notes to the sequence first!");
         return;
@@ -379,6 +379,7 @@
       }
       Tone.start();
       updateSequencePlayer();
+      console.log("After updateSequencePlayer, sequencePlayer:", sequencePlayer);
       Tone.Transport.start();
     }
     
