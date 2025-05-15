@@ -369,29 +369,25 @@
         alert("Add some notes to the sequence first!");
         return;
       }
-      // Stop and reset transport before starting
       if (sequencePlayer) {
         sequencePlayer.stop();
         sequencePlayer.dispose();
         sequencePlayer = null;
       }
       await Tone.Transport.stop();
-      setTimeout(() => {
-        Tone.Transport.position = 0;
-        updateSequencePlayer();
-        console.log("After updateSequencePlayer, sequencePlayer:", sequencePlayer);
-        Tone.Transport.start();
-      }, 50); // 50ms delay to ensure stop is processed
+      Tone.Transport.position = 0;
+      updateSequencePlayer(); // create and start the sequence
+      console.log("After updateSequencePlayer, sequencePlayer:", sequencePlayer);
+      Tone.Transport.start(); // then start the transport
+      console.log("Tone.Transport state:", Tone.Transport.state);
     }
     
     function stopSequence() {
       Tone.Transport.stop();
-      setTimeout(() => {
-        Tone.Transport.position = 0;
-        if (sequencePlayer) {
-          sequencePlayer.stop();
-        }
-      }, 50);
+      Tone.Transport.position = 0;
+      if (sequencePlayer) {
+        sequencePlayer.stop();
+      }
     }
     
     function clearSequence() {
