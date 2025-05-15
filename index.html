@@ -380,9 +380,10 @@
       }
       await Tone.Transport.stop();
       Tone.Transport.position = 0;
-      updateSequencePlayer(); // create and start the sequence
+      Tone.Transport.cancel(0); // Clear all scheduled events
+      updateSequencePlayer();
       console.log("After updateSequencePlayer, sequencePlayer:", sequencePlayer);
-      Tone.Transport.start(); // then start the transport
+      Tone.Transport.start();
       console.log("Tone.Transport state:", Tone.Transport.state);
     }
     
