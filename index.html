@@ -354,11 +354,13 @@
             key.classList.add('active');
             setTimeout(() => key.classList.remove('active'), 150);
           }
-        }, noteSequence, "4n").start(0);
+        }, noteSequence, "4n");
         
         // Set loop duration in bars
         Tone.Transport.timeSignature = 4;
+        sequencePlayer.loop = true;
         sequencePlayer.loopEnd = barDuration + "m";
+        sequencePlayer.start(0);
       }
     }
     
