@@ -1,4 +1,44 @@
-<p>This is a website.</p>
-<audio controls>
-    <source src="audio/my-sound.mp3" type="audio/mp3">
-</audio>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Interactive Web Audio</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.39/Tone.js"></script>
+  <style>
+    body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 2rem; }
+    button { margin: 1rem; padding: 1rem 2rem; font-size: 1.2rem; }
+  </style>
+</head>
+<body>
+  <h1>🔊 My Web Audio Playground</h1>
+  <button onclick="playSynth('C4')">Play C</button>
+  <button onclick="playSynth('E4')">Play E</button>
+  <button onclick="playSynth('G4')">Play G</button>
+  <button onclick="startLoop()">Start Loop</button>
+  <button onclick="stopLoop()">Stop Loop</button>
+
+  <script>
+    const synth = new Tone.Synth().toDestination();
+
+    function playSynth(note) {
+      Tone.start(); // ensures audio context starts on user interaction
+      synth.triggerAttackRelease(note, "8n");
+    }
+
+    const loop = new Tone.Loop((time) => {
+      synth.triggerAttackRelease("C4", "8n", time);
+    }, "0.5");
+
+    function startLoop() {
+      Tone.start();
+      Tone.Transport.start();
+      loop.start(0);
+    }
+
+    function stopLoop() {
+      loop.stop();
+      Tone.Transport.stop();
+    }
+  </script>
+</body>
+</html>
