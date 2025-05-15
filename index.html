@@ -201,68 +201,104 @@
     const octaves = [3, 4, 5];
     const whiteNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
     const blackNotes = ['C#', 'D#', 'F#', 'G#', 'A#'];
-    const blackKeyPositions = [0, 1, 3, 4, 5]; // positions after white keys
+    // Map white keys to their index in the full white key list
+    let whiteKeyList = [];
+    octaves.forEach(octave => {
+      whiteNotes.forEach(note => {
+        whiteKeyList.push(note + octave);
+      });
+    });
+
+    // Map for black key placement: after which white key does each black key appear
+    const blackKeyOffsets = {
+      'C#': 0,
+      'D#': 1,
+      'F#': 3,
+      'G#': 4,
+      'A#': 5
+    };
     
-    // Initialize the piano keyboard
     function createPianoKeyboard() {
       const pianoElement = document.getElementById('piano-keyboard');
-      
-      let whiteKeyCount = 0;
-      
+      pianoElement.innerHTML = '';
+      let whiteKeyElements = [];
+      let keyIndex = 0;
+      // 1. Render all white keys
       octaves.forEach(octave => {
         whiteNotes.forEach((note, i) => {
-          // Create white key
           const whiteKey = document.createElement('div');
           whiteKey.className = 'white-key';
           whiteKey.setAttribute('data-note', `${note}${octave}`);
-          
+          whiteKey.style.position = 'relative';
+          whiteKey.style.display = 'inline-flex';
+          whiteKey.style.verticalAlign = 'bottom';
+
           const keyLabel = document.createElement('div');
           keyLabel.className = 'key-label';
           keyLabel.textContent = `${note}${octave}`;
           whiteKey.appendChild(keyLabel);
-          
+
           whiteKey.addEventListener('click', function() {
             const noteName = this.getAttribute('data-note');
             playAndAddToSequence(noteName);
             this.classList.add('active');
             setTimeout(() => this.classList.remove('active'), 300);
           });
-          
+
           pianoElement.appendChild(whiteKey);
-          
-          // Add black key if needed
-          if (blackKeyPositions.includes(i)) {
-            const blackKey = document.createElement('div');
-            blackKey.className = 'black-key';
-            const blackNote = blackNotes[blackKeyPositions.indexOf(i)];
-            blackKey.setAttribute('data-note', `${blackNote}${octave}`);
-            
-            const blackKeyLabel = document.createElement('div');
-            blackKeyLabel.className = 'key-label';
-            blackKeyLabel.textContent = `${blackNote}${octave}`;
-            blackKey.appendChild(blackKeyLabel);
-            
-            blackKey.style.left = `${whiteKeyCount * 32 - 8}px`;
-            
-            blackKey.addEventListener('click', function() {
-              const noteName = this.getAttribute('data-note');
-              playAndAddToSequence(noteName);
-              this.classList.add('active');
-              setTimeout(() => this.classList.remove('active'), 300);
-            });
-            
-            pianoElement.appendChild(blackKey);
-          }
-          
-          whiteKeyCount++;
+          whiteKeyElements.push(whiteKey);
+          keyIndex++;
         });
-        
-        // Add octave label
+      });
+      // 2. Overlay all black keys at correct positions
+      let totalWhiteKeys = whiteKeyElements.length;
+      let globalWhiteIndex = 0;
+      octaves.forEach(octave => {
+        whiteNotes.forEach((note, i) => {
+          // For each white key, check if a black key should be placed after it
+          if (i < whiteNotes.length - 1) { // No black key after B
+            let blackNoteName = null;
+            if (note === 'C' || note === 'D' || note === 'F' || note === 'G' || note === 'A') {
+              // Map to black note
+              if (note === 'C') blackNoteName = `C#${octave}`;
+              if (note === 'D') blackNoteName = `D#${octave}`;
+              if (note === 'F') blackNoteName = `F#${octave}`;
+              if (note === 'G') blackNoteName = `G#${octave}`;
+              if (note === 'A') blackNoteName = `A#${octave}`;
+            }
+            if (blackNoteName) {
+              const blackKey = document.createElement('div');
+              blackKey.className = 'black-key';
+              blackKey.setAttribute('data-note', blackNoteName);
+              // Position black key between this white key and the next
+              blackKey.style.position = 'absolute';
+              blackKey.style.left = `${(globalWhiteIndex + 1) * 38 - 11}px`;
+              blackKey.style.top = '0';
+              const blackKeyLabel = document.createElement('div');
+              blackKeyLabel.className = 'key-label';
+              blackKeyLabel.textContent = blackNoteName;
+              blackKey.appendChild(blackKeyLabel);
+              blackKey.addEventListener('click', function() {
+                const noteName = this.getAttribute('data-note');
+                playAndAddToSequence(noteName);
+                this.classList.add('active');
+                setTimeout(() => this.classList.remove('active'), 300);
+              });
+              pianoElement.appendChild(blackKey);
+            }
+          }
+          globalWhiteIndex++;
+        });
+      });
+      // 3. Add octave labels
+      let octaveStart = 0;
+      octaves.forEach((octave, idx) => {
         const octaveLabel = document.createElement('div');
         octaveLabel.className = 'octave-label';
         octaveLabel.textContent = `Octave ${octave}`;
-        octaveLabel.style.left = `${(whiteKeyCount - 7) * 32}px`;
+        octaveLabel.style.left = `${(octaveStart + 3.5) * 38}px`;
         pianoElement.appendChild(octaveLabel);
+        octaveStart += 7;
       });
     }
     
