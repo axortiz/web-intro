@@ -363,32 +363,36 @@
       }
     }
     
-    function startSequence() {
+    async function startSequence() {
       console.log("startSequence called");
       if (noteSequence.length === 0) {
         alert("Add some notes to the sequence first!");
         return;
       }
       // Stop and reset transport before starting
-      Tone.Transport.stop();
-      Tone.Transport.position = 0;
       if (sequencePlayer) {
         sequencePlayer.stop();
         sequencePlayer.dispose();
         sequencePlayer = null;
       }
-      Tone.start();
-      updateSequencePlayer();
-      console.log("After updateSequencePlayer, sequencePlayer:", sequencePlayer);
-      Tone.Transport.start();
+      await Tone.start();
+      await Tone.Transport.stop();
+      setTimeout(() => {
+        Tone.Transport.position = 0;
+        updateSequencePlayer();
+        console.log("After updateSequencePlayer, sequencePlayer:", sequencePlayer);
+        Tone.Transport.start();
+      }, 50); // 50ms delay to ensure stop is processed
     }
     
     function stopSequence() {
       Tone.Transport.stop();
-      Tone.Transport.position = 0;
-      if (sequencePlayer) {
-        sequencePlayer.stop();
-      }
+      setTimeout(() => {
+        Tone.Transport.position = 0;
+        if (sequencePlayer) {
+          sequencePlayer.stop();
+        }
+      }, 50);
     }
     
     function clearSequence() {
