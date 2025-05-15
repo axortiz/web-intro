@@ -369,7 +369,14 @@
         alert("Add some notes to the sequence first!");
         return;
       }
-      
+      // Stop and reset transport before starting
+      Tone.Transport.stop();
+      Tone.Transport.position = 0;
+      if (sequencePlayer) {
+        sequencePlayer.stop();
+        sequencePlayer.dispose();
+        sequencePlayer = null;
+      }
       Tone.start();
       updateSequencePlayer();
       Tone.Transport.start();
@@ -377,6 +384,7 @@
     
     function stopSequence() {
       Tone.Transport.stop();
+      Tone.Transport.position = 0;
       if (sequencePlayer) {
         sequencePlayer.stop();
       }
