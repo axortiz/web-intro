@@ -375,8 +375,6 @@
       }
       if (sequencePlayer) {
         sequencePlayer.stop();
-        sequencePlayer.dispose();
-        sequencePlayer = null;
       }
       await Tone.Transport.stop();
       Tone.Transport.position = 0;
