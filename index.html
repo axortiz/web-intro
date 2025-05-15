@@ -87,6 +87,7 @@
       position: relative;
       margin: 0 auto;
       z-index: 1;
+      justify-content: center;
     }
     
     .white-key {
@@ -171,6 +172,107 @@
       pointer-events: none;
       box-shadow: 0 1px 4px rgba(0,0,0,0.12);
     }
+    
+    .tempo-control {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 1.5rem 0;
+      background-color: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 500px;
+    }
+    
+    .tempo-control label {
+      margin-bottom: 0.8rem;
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+    
+    #tempo-slider {
+      width: 100%;
+      height: 6px;
+      background: #e0e0e0;
+      outline: none;
+      border-radius: 3px;
+      cursor: pointer;
+      -webkit-appearance: none;
+    }
+    
+    #tempo-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #2196F3;
+      cursor: pointer;
+      transition: background 0.2s;
+      border: 2px solid white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    #tempo-slider::-moz-range-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #2196F3;
+      cursor: pointer;
+      transition: background 0.2s;
+      border: 2px solid white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    #tempo-slider::-webkit-slider-thumb:hover,
+    #tempo-slider::-moz-range-thumb:hover {
+      background: #0b7dda;
+    }
+    
+    #tempo-value {
+      font-weight: bold;
+      color: #2196F3;
+    }
+    
+    .speed-label {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #666;
+      padding: 5px 10px;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+    }
+    
+    #speed-description {
+      font-weight: bold;
+      color: #4CAF50;
+    }
+    
+    /* Animation for extreme tempos */
+    @keyframes shake {
+      0% { transform: translate(1px, 1px) rotate(0deg); }
+      10% { transform: translate(-1px, -2px) rotate(-1deg); }
+      20% { transform: translate(-3px, 0px) rotate(1deg); }
+      30% { transform: translate(3px, 2px) rotate(0deg); }
+      40% { transform: translate(1px, -1px) rotate(1deg); }
+      50% { transform: translate(-1px, 2px) rotate(-1deg); }
+      60% { transform: translate(-3px, 1px) rotate(0deg); }
+      70% { transform: translate(3px, 1px) rotate(-1deg); }
+      80% { transform: translate(-1px, -1px) rotate(1deg); }
+      90% { transform: translate(1px, 2px) rotate(0deg); }
+      100% { transform: translate(1px, -2px) rotate(-1deg); }
+    }
+    
+    @keyframes colorChange {
+      0% { color: #FF0000; }
+      20% { color: #FF9900; }
+      40% { color: #FFFF00; }
+      60% { color: #00FF00; }
+      80% { color: #0000FF; }
+      100% { color: #FF00FF; }
+    }
   </style>
 </head>
 <body>
@@ -187,6 +289,13 @@
     <button class="control-btn stop-btn" onclick="stopSequence()">Stop</button>
     <button class="control-btn" onclick="clearSequence()">Clear</button>
   </div>
+  
+  <div class="tempo-control">
+    <label for="tempo-slider">Tempo: <span id="tempo-value">120</span> BPM</label>
+    <input type="range" id="tempo-slider" min="40" max="1000" value="120" step="1">
+    <div class="speed-label">Speed: <span id="speed-description">Normal</span></div>
+  </div>
+  
   <script>
     const synth = new Tone.Synth().toDestination();
     let noteSequence = [];
@@ -194,11 +303,23 @@
     // Notes configuration for a 3-octave piano (C3 to B5)
     const octaves = [3, 4, 5];
     const whiteNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-    // Generate the piano keyboard
+    let tempo = 120; // Default tempo in BPM
+    
     function createPianoKeyboard() {
       const pianoElement = document.getElementById('piano-keyboard');
       pianoElement.innerHTML = '';
       let keyIndex = 0;
+      const totalWhiteKeys = octaves.length * whiteNotes.length;
+      const whiteKeyWidth = 38;
+      // Calculate total width of all white keys
+      const totalWidth = totalWhiteKeys * whiteKeyWidth;
+      // Center the keys by adding a wrapper
+      const keysWrapper = document.createElement('div');
+      keysWrapper.style.position = 'relative';
+      keysWrapper.style.width = totalWidth + 'px';
+      keysWrapper.style.margin = '0 auto';
+      keysWrapper.style.height = '170px';
+      pianoElement.appendChild(keysWrapper);
       octaves.forEach(octave => {
         whiteNotes.forEach((note, i) => {
           const whiteKey = document.createElement('div');
@@ -217,7 +338,7 @@
             this.classList.add('active');
             setTimeout(() => this.classList.remove('active'), 300);
           });
-          pianoElement.appendChild(whiteKey);
+          keysWrapper.appendChild(whiteKey);
           // Add black keys
           if (['C', 'D', 'F', 'G', 'A'].includes(note) && i < whiteNotes.length - 1) {
             const blackNote = note + '#';
@@ -225,7 +346,8 @@
             blackKey.className = 'black-key';
             blackKey.setAttribute('data-note', `${blackNote}${octave}`);
             blackKey.style.position = 'absolute';
-            blackKey.style.left = `${(keyIndex + 1) * 38 - 11}px`;
+            // Calculate left offset relative to the wrapper
+            blackKey.style.left = `${(keyIndex + 1) * whiteKeyWidth - 11}px`;
             blackKey.style.top = '0';
             const blackKeyLabel = document.createElement('div');
             blackKeyLabel.className = 'key-label';
@@ -237,7 +359,7 @@
               this.classList.add('active');
               setTimeout(() => this.classList.remove('active'), 300);
             });
-            pianoElement.appendChild(blackKey);
+            keysWrapper.appendChild(blackKey);
           }
           keyIndex++;
         });
@@ -248,11 +370,75 @@
         const octaveLabel = document.createElement('div');
         octaveLabel.className = 'octave-label';
         octaveLabel.textContent = `Octave ${octave}`;
-        octaveLabel.style.left = `${(octaveStart + 3.5) * 38}px`;
-        pianoElement.appendChild(octaveLabel);
+        octaveLabel.style.left = `${(octaveStart + 3.5) * whiteKeyWidth}px`;
+        keysWrapper.appendChild(octaveLabel);
         octaveStart += 7;
       });
     }
+    function updateTempo(value) {
+      tempo = value;
+      document.getElementById('tempo-value').textContent = tempo;
+      Tone.Transport.bpm.value = tempo;
+      
+      // Update speed description without applying animations immediately
+      const speedDescription = document.getElementById('speed-description');
+      if (tempo < 60) {
+        speedDescription.textContent = 'Very Slow';
+      } else if (tempo < 90) {
+        speedDescription.textContent = 'Slow';
+      } else if (tempo < 110) {
+        speedDescription.textContent = 'Moderate';
+      } else if (tempo < 140) {
+        speedDescription.textContent = 'Normal';
+      } else if (tempo < 180) {
+        speedDescription.textContent = 'Fast';
+      } else if (tempo < 300) {
+        speedDescription.textContent = 'Very Fast';
+      } else if (tempo < 500) {
+        speedDescription.textContent = 'Ridiculous';
+      } else if (tempo < 700) {
+        speedDescription.textContent = 'Is This Even Music?';
+      } else if (tempo < 900) {
+        speedDescription.textContent = 'My Ears Are Bleeding';
+      } else {
+        speedDescription.textContent = 'Ludicrous Speed!';
+      }
+      
+      // If the sequence is already playing, apply the animations
+      if (Tone.Transport.state === "started") {
+        applyTempoAnimations();
+      }
+    }
+    
+    // New function to apply animations based on tempo
+    function applyTempoAnimations() {
+      const speedDescription = document.getElementById('speed-description');
+      
+      // Reset animations first
+      document.body.style.animation = '';
+      speedDescription.style.animation = '';
+      
+      // Apply animations only for extreme tempos
+      if (tempo >= 300 && tempo < 500) {
+        document.body.style.animation = 'shake 0.5s infinite';
+      } else if (tempo >= 500 && tempo < 700) {
+        document.body.style.animation = 'shake 0.3s infinite';
+        speedDescription.style.animation = 'colorChange 1s infinite';
+      } else if (tempo >= 700 && tempo < 900) {
+        document.body.style.animation = 'shake 0.2s infinite';
+        speedDescription.style.animation = 'colorChange 0.5s infinite';
+      } else if (tempo >= 900) {
+        document.body.style.animation = 'shake 0.1s infinite';
+        speedDescription.style.animation = 'colorChange 0.3s infinite';
+      }
+    }
+    
+    // Function to remove all animations
+    function removeTempoAnimations() {
+      document.body.style.animation = '';
+      document.getElementById('speed-description').style.animation = '';
+    }
+    
     function playAndAddToSequence(note) {
       Tone.start();
       synth.triggerAttackRelease(note, "8n");
@@ -290,15 +476,26 @@
       if (sequencePlayer) {
         sequencePlayer.stop();
       }
+      
+      // Set the tempo
+      Tone.Transport.bpm.value = tempo;
+      
+      // Calculate note duration based on tempo
+      const noteDuration = 60/tempo + 'n';
+      
       sequencePlayer = new Tone.Sequence((time, note) => {
-        synth.triggerAttackRelease(note, '8n', time);
+        synth.triggerAttackRelease(note, noteDuration, time);
         const key = document.querySelector(`[data-note="${note}"]`);
         if (key) {
           key.classList.add('active');
           setTimeout(() => key.classList.remove('active'), 150);
         }
       }, noteSequence, '4n').start(0);
+      
       Tone.Transport.start();
+      
+      // Apply animations only after playback has started
+      applyTempoAnimations();
     }
     function stopSequence() {
       Tone.Transport.stop();
@@ -306,15 +503,28 @@
       if (sequencePlayer) {
         sequencePlayer.stop();
       }
+      
+      // Remove animations when stopped
+      removeTempoAnimations();
     }
     function clearSequence() {
       stopSequence();
       noteSequence = [];
       updateSequenceDisplay();
+      // Make sure animations are removed when clearing sequence
+      removeTempoAnimations();
     }
     window.onload = function() {
       createPianoKeyboard();
+      
+      // Set up tempo slider
+      const tempoSlider = document.getElementById('tempo-slider');
+      tempoSlider.addEventListener('input', function() {
+        updateTempo(parseInt(this.value));
+      });
+      updateTempo(tempo); // Initialize with default value
     };
   </script>
 </body>
 </html>
+
