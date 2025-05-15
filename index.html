@@ -364,6 +364,10 @@
     }
     
     async function startSequence() {
+      if (Tone.context.state !== "running") {
+        await Tone.context.resume();
+        console.log("Resumed Tone.context, state:", Tone.context.state);
+      }
       console.log("startSequence called");
       if (noteSequence.length === 0) {
         alert("Add some notes to the sequence first!");
