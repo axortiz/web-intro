@@ -187,7 +187,7 @@
   </div>
   
   <div class="control-buttons">
-    <button class="control-btn" onclick="startSequence()">Play Sequence</button>
+    <button class="control-btn" onclick="Tone.start().then(startSequence)">Play Sequence</button>
     <button class="control-btn stop-btn" onclick="stopSequence()">Stop</button>
     <button class="control-btn" onclick="clearSequence()">Clear</button>
   </div>
@@ -364,7 +364,6 @@
     }
     
     async function startSequence() {
-      await Tone.start(); // Ensure AudioContext is started immediately on user action
       console.log("startSequence called");
       if (noteSequence.length === 0) {
         alert("Add some notes to the sequence first!");
