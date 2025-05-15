@@ -364,6 +364,7 @@
     }
     
     async function startSequence() {
+      await Tone.start(); // Ensure AudioContext is started immediately on user action
       console.log("startSequence called");
       if (noteSequence.length === 0) {
         alert("Add some notes to the sequence first!");
@@ -375,7 +376,6 @@
         sequencePlayer.dispose();
         sequencePlayer = null;
       }
-      await Tone.start();
       await Tone.Transport.stop();
       setTimeout(() => {
         Tone.Transport.position = 0;
