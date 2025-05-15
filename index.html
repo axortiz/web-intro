@@ -6,38 +6,169 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.39/Tone.js"></script>
   <style>
     body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 2rem; }
-    button { margin: 1rem; padding: 1rem 2rem; font-size: 1.2rem; }
+    button { margin: 0.5rem; padding: 0.8rem 1.5rem; font-size: 1.1rem; }
+    .note-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 600px;
+      margin-bottom: 1rem;
+    }
+    .control-buttons {
+      display: flex;
+      margin: 1rem 0;
+    }
+    .note-button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+    }
+    .note-button:hover {
+      background-color: #3e8e41;
+    }
+    .control-btn {
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      margin: 0 0.5rem;
+      transition: background-color 0.3s;
+    }
+    .control-btn:hover {
+      background-color: #0b7dda;
+    }
+    .stop-btn {
+      background-color: #f44336;
+    }
+    .stop-btn:hover {
+      background-color: #d32f2f;
+    }
+    .sequence-display {
+      border: 1px solid #ccc;
+      padding: 1rem;
+      min-height: 50px;
+      min-width: 500px;
+      margin: 1rem 0;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .note-pill {
+      display: inline-block;
+      background-color: #4CAF50;
+      color: white;
+      padding: 0.3rem 0.6rem;
+      margin: 0.2rem;
+      border-radius: 15px;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
-  <h1>🔊 My Web Audio Playground</h1>
-  <button onclick="playSynth('C4')">Play C</button>
-  <button onclick="playSynth('E4')">Play E</button>
-  <button onclick="playSynth('G4')">Play G</button>
-  <button onclick="startLoop()">Start Loop</button>
-  <button onclick="stopLoop()">Stop Loop</button>
+  <h1>🎵 Interactive Music Sequencer</h1>
+  
+  <div class="note-buttons">
+    <button class="note-button" onclick="playAndAddToSequence('C4')">C4</button>
+    <button class="note-button" onclick="playAndAddToSequence('D4')">D4</button>
+    <button class="note-button" onclick="playAndAddToSequence('E4')">E4</button>
+    <button class="note-button" onclick="playAndAddToSequence('F4')">F4</button>
+    <button class="note-button" onclick="playAndAddToSequence('G4')">G4</button>
+    <button class="note-button" onclick="playAndAddToSequence('A4')">A4</button>
+    <button class="note-button" onclick="playAndAddToSequence('B4')">B4</button>
+    <button class="note-button" onclick="playAndAddToSequence('C5')">C5</button>
+  </div>
+  
+  <div class="sequence-display" id="sequence-display">
+    <p id="empty-message">Click notes to add them to the sequence</p>
+  </div>
+  
+  <div class="control-buttons">
+    <button class="control-btn" onclick="startSequence()">Play Sequence</button>
+    <button class="control-btn stop-btn" onclick="stopSequence()">Stop</button>
+    <button class="control-btn" onclick="clearSequence()">Clear</button>
+  </div>
 
   <script>
     const synth = new Tone.Synth().toDestination();
-
-    function playSynth(note) {
-      Tone.start(); // ensures audio context starts on user interaction
-      synth.triggerAttackRelease(note, "8n");
-    }
-
-    const loop = new Tone.Loop((time) => {
-      synth.triggerAttackRelease("C4", "8n", time);
-    }, "0.5");
-
-    function startLoop() {
+    let noteSequence = [];
+    let sequencePlayer = null;
+    
+    function playAndAddToSequence(note) {
+      // Play the note immediately
       Tone.start();
-      Tone.Transport.start();
-      loop.start(0);
+      synth.triggerAttackRelease(note, "8n");
+      
+      // Add to the sequence
+      noteSequence.push(note);
+      updateSequenceDisplay();
+      
+      // If sequence is playing, update it
+      if (Tone.Transport.state === "started") {
+        updateSequencePlayer();
+      }
     }
-
-    function stopLoop() {
-      loop.stop();
+    
+    function updateSequenceDisplay() {
+      const display = document.getElementById("sequence-display");
+      const emptyMessage = document.getElementById("empty-message");
+      
+      if (noteSequence.length > 0) {
+        if (emptyMessage) emptyMessage.remove();
+        
+        display.innerHTML = "";
+        noteSequence.forEach((note, index) => {
+          const pill = document.createElement("span");
+          pill.className = "note-pill";
+          pill.textContent = note;
+          display.appendChild(pill);
+        });
+      } else {
+        display.innerHTML = "<p id='empty-message'>Click notes to add them to the sequence</p>";
+      }
+    }
+    
+    function updateSequencePlayer() {
+      if (sequencePlayer) {
+        sequencePlayer.dispose();
+      }
+      
+      if (noteSequence.length > 0) {
+        // Calculate duration based on number of notes, minimum of one bar
+        const barDuration = Math.max(1, Math.ceil(noteSequence.length / 4));
+        
+        sequencePlayer = new Tone.Sequence((time, note) => {
+          synth.triggerAttackRelease(note, "8n", time);
+        }, noteSequence, "4n").start(0);
+        
+        // Set loop duration in bars
+        Tone.Transport.timeSignature = 4;
+        sequencePlayer.loopEnd = barDuration + "m";
+      }
+    }
+    
+    function startSequence() {
+      if (noteSequence.length === 0) {
+        alert("Add some notes to the sequence first!");
+        return;
+      }
+      
+      Tone.start();
+      updateSequencePlayer();
+      Tone.Transport.start();
+    }
+    
+    function stopSequence() {
       Tone.Transport.stop();
+      if (sequencePlayer) {
+        sequencePlayer.stop();
+      }
+    }
+    
+    function clearSequence() {
+      stopSequence();
+      noteSequence = [];
+      updateSequenceDisplay();
     }
   </script>
 </body>
